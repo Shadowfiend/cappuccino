@@ -19,11 +19,16 @@ with (window)
 {
     eval(File.read(OBJJ_HOME + "/lib/Frameworks/Objective-J/rhino.platform/Objective-J.js", { charset:"UTF-8" }));
 
+    // Load up any include paths.
     if (system.args.length > 0)
     {
         while (system.args.length && system.args[0].indexOf('-I') === 0)
             OBJJ_INCLUDE_PATHS = system.args.shift().substr(2).split(':').concat(OBJJ_INCLUDE_PATHS);
-                    
+    }
+
+    // Either load a set of files to run or enter console mode.
+    if (system.args.length > 0)
+    {
         var mainFilePath = String((new Packages.java.io.File(args.shift())).getAbsolutePath());
         
         objj_import(mainFilePath, YES, function() {
