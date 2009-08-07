@@ -484,7 +484,7 @@ objj_search.prototype.complete = function(aFile)
 
 function objj_standardize_path(aPath)
 {
-    if (aPath.indexOf("/./") != -1 && aPath.indexOf("//") != -1 && aPath.indexOf("/../") != -1)
+    if (aPath.indexOf("/./") == -1 && aPath.indexOf("//") == -1 && aPath.indexOf("/../") == -1)
         return aPath;
 
     var index = 0,
