@@ -33,7 +33,7 @@ with (window)
     }
     else
     {
-        var br = new Packages.java.io.BufferedReader(new Packages.java.io.InputStreamReader(Packages.java.lang.System["in"], "UTF-8"));
+        var br = new Packages.jline.ConsoleReader();
 
         while (true)
         {
