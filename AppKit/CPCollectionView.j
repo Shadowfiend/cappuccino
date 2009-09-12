@@ -93,6 +93,8 @@
     unsigned                _numberOfColumns;
     
     id                      _delegate;
+
+    CPEvent                 _mouseDownEvent;
 }
 
 - (id)initWithFrame:(CGRect)aFrame
@@ -122,15 +124,16 @@
 }
 
 /*!
-    Sets the item prototype to <code>anItem</code>
+    Sets the item prototype to \c anItem
     @param anItem the new item prototype
 */
 - (void)setItemPrototype:(CPCollectionViewItem)anItem
 {
-    _itemData = [CPKeyedArchiver archivedDataWithRootObject:anItem];
-    _itemForDragging = anItem//[CPKeyedUnarchiver unarchiveObjectWithData:_itemData];
+    _cachedItems = [];
+    _itemData = nil;
+    _itemForDragging = anItem;//[CPKeyedUnarchiver unarchiveObjectWithData:_itemData];
     _itemPrototype = anItem;
-    
+
     [self reloadContent];
 }
 
@@ -143,17 +146,24 @@
 }
 
 /*!
-    Returns a collection view item for <code>anObject</code>.
+    Returns a collection view item for \c anObject.
     @param anObject the object to be represented.
 */
 - (CPCollectionViewItem)newItemForRepresentedObject:(id)anObject
 {
     var item = nil;
-    
+
     if (_cachedItems.length)
         item = _cachedItems.pop();
+
     else
+    {
+        if (!_itemData)
+            if (_itemPrototype)
+                _itemData = [CPKeyedArchiver archivedDataWithRootObject:_itemPrototype];
+
         item = [CPKeyedUnarchiver unarchiveObjectWithData:_itemData];
+    }
 
     [item setRepresentedObject:anObject];
     [[item view] setFrameSize:_itemSize];
@@ -163,7 +173,7 @@
 
 // Working with the Responder Chain
 /*!
-    Returns <code>YES</code> by default.
+    Returns \c YES by default.
 */
 - (BOOL)acceptsFirstResponder
 {
@@ -175,13 +185,13 @@
 */
 - (BOOL)isFirstResponder
 {
-    return [[self window] firstResponder] == self;
+    return [[self window] firstResponder] === self;
 }
 
 // Setting the Content
 /*!
-    Sets the content of the collection view to the content in <code>anArray</code>. 
-    This array can be of any type, and each element will be passed to the <code>setRepresentedObject:</code> method.  
+    Sets the content of the collection view to the content in \c anArray. 
+    This array can be of any type, and each element will be passed to the \c -setRepresentedObject: method.  
     It's the responsibility of your custom collection view item to interpret the object.
     @param anArray the content array
 */
@@ -214,7 +224,7 @@
 // Setting the Selection Mode
 /*!
     Sets whether the user is allowed to select items
-    @param isSelectable <code>YES</code> allows the user to select items.
+    @param isSelectable \c YES allows the user to select items.
 */
 - (void)setSelectable:(BOOL)isSelectable
 {
@@ -233,8 +243,8 @@
 }
 
 /*!
-    Returns <code>YES</code> if the collection view is
-    selected, and <code>NO</code> otherwise.
+    Returns \c YES if the collection view is
+    selected, and \c NO otherwise.
 */
 - (BOOL)isSelected
 {
@@ -243,7 +253,7 @@
 
 /*!
     Sets whether the user may have no items selected. If YES, mouse clicks not on any item will empty the current selection. The first item will also start off as selected.
-    @param shouldAllowMultipleSelection <code>YES</code> allows the user to select multiple items
+    @param shouldAllowMultipleSelection \c YES allows the user to select multiple items
 */
 - (void)setAllowsEmptySelection:(BOOL)shouldAllowEmptySelection
 {
@@ -251,7 +261,7 @@
 }
 
 /*!
-    Returns <code>YES</code> if the user can select no items, <code>NO</code> otherwise.
+    Returns \c YES if the user can select no items, \c NO otherwise.
 */
 - (BOOL)allowsEmptySelection
 {
@@ -260,7 +270,7 @@
 
 /*!
     Sets whether the user can select multiple items.
-    @param shouldAllowMultipleSelection <code>YES</code> allows the user to select multiple items
+    @param shouldAllowMultipleSelection \c YES allows the user to select multiple items
 */
 - (void)setAllowsMultipleSelection:(BOOL)shouldAllowMultipleSelection
 {
@@ -268,7 +278,7 @@
 }
 
 /*!
-    Returns <code>YES</code> if the user can select multiple items, <code>NO</code> otherwise.
+    Returns \c YES if the user can select multiple items, \c NO otherwise.
 */
 - (BOOL)allowsMultipleSelection
 {
@@ -322,13 +332,13 @@
     
     _items = [];
 
-    if (!_itemData || !_content)
+    if (!_itemPrototype || !_content)
         return;
-    
+
     var index = 0;
-    
+
     count = _content.length;
-        
+
     for (; index < count; ++index)
     {
         _items.push([self newItemForRepresentedObject:_content[index]]);
@@ -528,13 +538,16 @@
 
 - (void)mouseDown:(CPEvent)anEvent
 {
+    _mouseDownEvent = anEvent;
+
     var location = [self convertPoint:[anEvent locationInWindow] fromView:nil],
         row = FLOOR(location.y / (_itemSize.height + _verticalMargin)),
         column = FLOOR(location.x / (_itemSize.width + _horizontalMargin)),
         index = row * _numberOfColumns + column;
-        
+
     if (index >= 0 && index < _items.length)
         [self setSelectionIndexes:[CPIndexSet indexSetWithIndex:index]];
+
     else if (_allowsEmptySelection)
         [self setSelectionIndexes:[CPIndexSet indexSet]];
 }
@@ -566,7 +579,7 @@
     [self dragView:view
         at:[[_items[[_selectionIndexes firstIndex]] view] frame].origin
         offset:CGPointMakeZero()
-        event:anEvent
+        event:_mouseDownEvent
         pasteboard:nil
         source:self
         slideBack:YES];
@@ -684,7 +697,7 @@
 // Modifying the Selection
 /*!
     Sets whether this view item should be selected.
-    @param shouldBeSelected <code>YES</code> makes the item selected. <code>NO</code> deselects it.
+    @param shouldBeSelected \c YES makes the item selected. \c NO deselects it.
 */
 - (void)setSelected:(BOOL)shouldBeSelected
 {
@@ -698,7 +711,7 @@
 }
 
 /*!
-    Returns <code>YES</code> if the item is currently selected. <code>NO</code> if the item is not selected.
+    Returns \c YES if the item is currently selected. \c NO if the item is not selected.
 */
 - (BOOL)isSelected
 {
@@ -757,7 +770,7 @@ var CPCollectionViewMinItemSizeKey      = @"CPCollectionViewMinItemSizeKey",
 
     if (!CGSizeEqualToSize(_minItemSize, CGSizeMakeZero()))
       [aCoder encodeSize:_minItemSize forKey:CPCollectionViewMinItemSizeKey];
-      
+
     if (!CGSizeEqualToSize(_maxItemSize, CGSizeMakeZero()))
       [aCoder encodeSize:_maxItemSize forKey:CPCollectionViewMaxItemSizeKey];
 
