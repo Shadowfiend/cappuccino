@@ -78,7 +78,11 @@ exports.run = function(args)
     {
         while (args.length && args[0].indexOf('-I') === 0)
             OBJJ_INCLUDE_PATHS = args.shift().substr(2).split(':').concat(OBJJ_INCLUDE_PATHS);
-                
+    }
+
+    // Load up any include paths.
+    if (args.length > 0)
+    {
         var mainFilePath = file.canonical(args.shift());
     
         objj_import(mainFilePath, YES, function() {
