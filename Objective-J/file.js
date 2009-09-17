@@ -479,7 +479,7 @@ objj_search.prototype.complete = function(aFile)
 
 // objj_standardize_path
 //
-// Standardizes the input path by removing extrenenous components and resolving 
+// Standardizes the input path by removing extranenous components and resolving 
 // references to parent directories.
 
 function objj_standardize_path(aPath)
@@ -487,16 +487,16 @@ function objj_standardize_path(aPath)
     if (aPath.indexOf("/./") == -1 && aPath.indexOf("//") == -1 && aPath.indexOf("/../") == -1)
         return aPath;
 
-    var index = 0,
-        components = aPath.split('/');
+    var components = aPath.split('/'),
+        index = 0;
 
     for(;index < components.length; ++index)
-        if(components[index] == "..")
+        if(components[index] == ".." && index > 0 && components[index - 1] != '..')
         {
             components.splice(index - 1, 2);
             index -= 2;
         }
-        else if(index != 0 && !components[index].length || components[index] == '.' || components[index] == "..")
+        else if(index != 0 && !components[index].length || components[index] == '.')
             components.splice(index--, 1);
     
     return components.join('/');
